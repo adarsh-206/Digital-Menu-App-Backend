@@ -1,0 +1,25 @@
+# Ignore virtual environment directories
+venv/
+env/
+.venv/
+.env/
+
+# Ignore database files
+db.sqlite3
+
+# Ignore static and media files
+staticfiles/
+media/
+
+# Ignore sensitive or generated files
+.env
+.envrc
+.vscode/
+__pycache__/
+*/__pycache__
+*.pyc
+**/__pycache__/
+
+# Ignore log files
+logs/
+*.log
