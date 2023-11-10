@@ -1,15 +1,14 @@
-from django.urls import path
-from menus.views import MenuListCreateView, MenuRetrieveUpdateDestroyView, MenuAddItemView
+# menu/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import MenuViewSet, MenuItemViewSet, MenuUpdateView, MenuDeleteView
+
+router = DefaultRouter()
+router.register(r'menus', MenuViewSet)
+router.register(r'menu-items', MenuItemViewSet)
 
 urlpatterns = [
-    # List and create menus
-    path('menus', MenuListCreateView.as_view(), name='menu-list-create'),
-
-    # Retrieve, update, and delete a specific menu
-    path('menus/<int:pk>', MenuRetrieveUpdateDestroyView.as_view(),
-         name='menu-retrieve-update-destroy'),
-
-    # Add items to a specific menu
-    path('menus/<int:menu_id>/add-item/',
-         MenuAddItemView.as_view(), name='menu-add-item'),
+    path('', include(router.urls)),
+    path('menus/<int:pk>/update/', MenuUpdateView.as_view(), name='menu-update'),
+    path('menus/<int:pk>/delete/', MenuDeleteView.as_view(), name='menu-delete'),
 ]

@@ -17,7 +17,11 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, mobile_number, email=None, password=None):
-        return self.create_user(mobile_number, email, password)
+        user = self.create_user(mobile_number, email, password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -28,6 +32,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # A User can be associated with a Restaurant, and a Restaurant can be associated with multiple User objects
     restaurant = models.ForeignKey(
         Restaurant, on_delete=models.CASCADE, null=True, related_name='user_restaurant')
+
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 

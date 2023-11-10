@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     'menus.apps.MenusConfig',
     'items.apps.ItemsConfig',
     'categories.apps.CategoriesConfig',
-    'media.apps.MediaConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -103,7 +102,7 @@ DATABASES = {
 OAUTH2_PROVIDER = {
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
     'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,
-    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 600,
+    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 3600,
 }
 
 REST_FRAMEWORK = {
@@ -156,4 +155,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://main--jade-monstera-ab7ad9.netlify.app",
+    "http://192.168.29.179:5173"
 ]

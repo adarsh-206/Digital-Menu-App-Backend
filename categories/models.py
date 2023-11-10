@@ -1,3 +1,4 @@
+# categories\model
 from django.db import models
 from restaurants.models import Restaurant
 

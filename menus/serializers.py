@@ -1,6 +1,10 @@
-# menu/serializers.py
+# menus/serializers.py
 from rest_framework import serializers
 from .models import Menu, MenuItem
+from categories.models import Category
+from categories.serializers import CategorySerializer
+from items.models import Item
+from items.serializers import ItemSerializer
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
@@ -10,8 +14,6 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
 
 class MenuSerializer(serializers.ModelSerializer):
-    # To display items as an array of item names
-    items = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Menu

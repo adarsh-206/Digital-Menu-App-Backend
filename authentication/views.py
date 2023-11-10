@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 import uuid
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 from restaurants.models import Restaurant
+from restaurants.serializers import RestaurantSerializer
 
 
 class UserRegistrationView(APIView):
@@ -122,9 +123,30 @@ class LogoutView(APIView):
 
 
 class UserHasRestaurantView(APIView):
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+
     def get(self, request):
         user = request.user
         has_restaurant = Restaurant.objects.filter(
             user_restaurant=user).exists()
 
-        return Response({'has_restaurant': has_restaurant}, status=status.HTTP_200_OK)
+        # Retrieve the associated restaurant details if a restaurant exists
+        restaurant_details = None
+        if has_restaurant:
+            restaurant = Restaurant.objects.get(user_restaurant=user)
+            restaurant_serializer = RestaurantSerializer(restaurant)
+            restaurant_details = restaurant_serializer.data
+
+        # Include both user and restaurant details in the response
+        user_details = {
+            'user_id': user.id,
+            'mobile_number': user.mobile_number,
+        }
+
+        response_data = {
+            'has_restaurant': has_restaurant,
+            'user_details': user_details,
+            'restaurant_details': restaurant_details,
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)

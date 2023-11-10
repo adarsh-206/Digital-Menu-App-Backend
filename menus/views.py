@@ -1,62 +1,41 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
-from rest_framework.response import Response
+# menu/views.py
+from rest_framework import viewsets
+from rest_framework.generics import UpdateAPIView, RetrieveDestroyAPIView
 from .models import Menu, MenuItem
 from .serializers import MenuSerializer, MenuItemSerializer
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from items.models import Item
-from categories.models import Category
+from rest_framework.response import Response
+from rest_framework import status
 
 
-class MenuListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+class MenuViewSet(viewsets.ModelViewSet):
     queryset = Menu.objects.all()
     serializer_class = MenuSerializer
 
+    def update_menu_name(self, request, pk=None):
+        try:
+            menu = Menu.objects.get(pk=pk)
+        except Menu.DoesNotExist:
+            return Response({'error': 'Menu not found'}, status=status.HTTP_404_NOT_FOUND)
 
-class MenuRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
-    queryset = Menu.objects.all()
-    serializer_class = MenuSerializer
+        new_name = request.data.get('name')
+        if new_name:
+            menu.name = new_name
+            menu.save()
+            return Response(MenuSerializer(menu).data)
+        else:
+            return Response({'error': 'New menu name is required'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class MenuAddItemView(generics.CreateAPIView):
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+class MenuItemViewSet(viewsets.ModelViewSet):
+    queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
 
-    def create(self, request, menu_id):
-        try:
-            menu = Menu.objects.get(id=menu_id)
-        except Menu.DoesNotExist:
-            return Response({"error": "Menu does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Get the category and parent category from the request data
-        category_id = request.data.get("category")
-        parent_category_id = request.data.get("parent_category")
+class MenuUpdateView(UpdateAPIView):
+    queryset = Menu.objects.all()
+    serializer_class = MenuSerializer
 
-        try:
-            category = Category.objects.get(id=category_id)
-        except Category.DoesNotExist:
-            return Response({"error": "Category does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            parent_category = Category.objects.get(id=parent_category_id)
-        except Category.DoesNotExist:
-            return Response({"error": "Parent category does not exist"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Create a new menu item
-        menu_item_data = {
-            "menu": menu.id,
-            "item": category.item_set.first().id,
-            "quantity": 1,
-            "category": category_id,
-            "parent_category": parent_category_id,
-        }
-
-        serializer = self.get_serializer(data=menu_item_data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+class MenuDeleteView(RetrieveDestroyAPIView):
+    queryset = Menu.objects.all()
+    serializer_class = MenuSerializer
