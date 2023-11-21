@@ -17,8 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
             'min_length': 'Enter valid 10 digit mobile number.',
             'max_length': 'Enter valid 10 digit mobile number.',
         })
-    email = serializers.EmailField(required=False, allow_blank=True)
-    # State + PAN-based 15-characters
+    email = serializers.EmailField(
+        required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = User

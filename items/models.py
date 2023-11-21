@@ -8,9 +8,8 @@ class Item(models.Model):
     description = models.TextField()
     is_veg = models.BooleanField(default=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    ratings = models.DecimalField(max_digits=3, decimal_places=2)
-    ingredients = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='item_images/', blank=True, null=True)
 
     subcategory = models.ForeignKey(
         Category, on_delete=models.CASCADE, related_name='items')

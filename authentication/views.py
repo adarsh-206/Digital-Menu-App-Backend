@@ -36,7 +36,7 @@ class UserRegistrationView(APIView):
             user=user,
             application=application,
             token=str(uuid.uuid4()),
-            expires=timezone.now() + timedelta(minutes=20),
+            expires=timezone.now() + timedelta(seconds=3600),
             scope='read write'
         )
         refresh_token = RefreshToken.objects.create(
@@ -84,7 +84,7 @@ class UserLoginView(APIView):
             user=user,
             application=application,
             token=str(uuid.uuid4()),
-            expires=timezone.now() + timedelta(minutes=20),
+            expires=timezone.now() + timedelta(seconds=3600),
             scope='read write'
         )
         refresh_token = RefreshToken.objects.create(
@@ -127,26 +127,8 @@ class UserHasRestaurantView(APIView):
 
     def get(self, request):
         user = request.user
-        has_restaurant = Restaurant.objects.filter(
-            user_restaurant=user).exists()
-
-        # Retrieve the associated restaurant details if a restaurant exists
-        restaurant_details = None
-        if has_restaurant:
-            restaurant = Restaurant.objects.get(user_restaurant=user)
-            restaurant_serializer = RestaurantSerializer(restaurant)
-            restaurant_details = restaurant_serializer.data
-
-        # Include both user and restaurant details in the response
-        user_details = {
-            'user_id': user.id,
-            'mobile_number': user.mobile_number,
-        }
-
-        response_data = {
-            'has_restaurant': has_restaurant,
-            'user_details': user_details,
-            'restaurant_details': restaurant_details,
-        }
-
-        return Response(response_data, status=status.HTTP_200_OK)
+        if user.restaurant:
+            serializer = RestaurantSerializer(user.restaurant)
+            return Response({'has_restaurant': True, 'restaurant_details': serializer.data}, status=200)
+        else:
+            return Response({'has_restaurant': False}, status=200)
