@@ -1,7 +1,7 @@
 # menu/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import MenuViewSet, MenuItemViewSet, MenuUpdateView, MenuDeleteView, CheckMenuItemAdded, RemoveMenuItemView, SortedItemsView, SetLaunchStatusFalse, FilteredItemsView
+from .views import MenuViewSet, MenuItemViewSet, MenuUpdateView, MenuDeleteView, CheckMenuItemAdded, RemoveMenuItemView, SortedItemsView, SetLaunchStatusFalse, FilteredItemsView, SaveQRCodeView
 
 router = DefaultRouter()
 router.register(r'menus', MenuViewSet, basename='item')
@@ -19,4 +19,6 @@ urlpatterns = [
     path('menus/set_launch_status_false/<int:menu_id>/',
          SetLaunchStatusFalse.as_view(), name='set_launch_status_false'),
     path('filtered-items/', FilteredItemsView.as_view(), name='filtered_items'),
+    path('save-qr-code/<str:gst_no>/<int:menu_id>/',
+         SaveQRCodeView.as_view(), name='save-qr-code'),
 ]

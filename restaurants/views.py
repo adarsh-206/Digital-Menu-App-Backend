@@ -2,17 +2,14 @@
 from rest_framework import generics
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 from rest_framework.permissions import IsAuthenticated
-from .models import Restaurant
-from .serializers import RestaurantSerializer
+from .models import Restaurant, Event, OpeningHours
+from .serializers import RestaurantSerializer, EventSerializer, OpeningHoursSerializer, FeedbackSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from authentication.models import User
-import qrcode
-from django.http import HttpResponse
-from io import BytesIO
 from django.conf import settings
 from menus.models import Menu
+from django.shortcuts import get_object_or_404
 
 
 class RestaurantListCreateView(generics.ListCreateAPIView):
@@ -33,9 +30,31 @@ class RestaurantListCreateView(generics.ListCreateAPIView):
 
 
 class RestaurantDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
-    queryset = Restaurant.objects.all()
-    serializer_class = RestaurantSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Restaurant.objects.filter(user_restaurant=self.request.user)
+
+    def get_serializer_class(self):
+        return RestaurantSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CheckRestaurantRegistration(APIView):
@@ -81,3 +100,76 @@ class GenerateQRCode(APIView):
 
         # Return the menu URL in the API response
         return Response({'qr_code_link': menu_url})
+
+
+class EventCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+    serializer_class = EventSerializer
+
+    def perform_create(self, serializer):
+        # Associate the event with the currently authenticated user's restaurant
+        serializer.save(restaurant=self.request.user.restaurant)
+
+
+class EventListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+    serializer_class = EventSerializer
+
+    def get_queryset(self):
+        # Get events for the currently authenticated user's restaurant
+        return Event.objects.filter(restaurant=self.request.user.restaurant)
+
+
+class OpeningHoursCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+    serializer_class = OpeningHoursSerializer
+
+    def perform_create(self, serializer):
+        # Check if opening hours already exist for the restaurant
+        opening_hours_instance = get_object_or_404(
+            OpeningHours, restaurant=self.request.user.restaurant)
+
+        # If opening hours exist, update them; otherwise, create new ones
+        if opening_hours_instance:
+            serializer.update(opening_hours_instance,
+                              serializer.validated_data)
+        else:
+            serializer.save(restaurant=self.request.user.restaurant)
+
+
+class OpeningHoursRetrieveView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
+    serializer_class = OpeningHoursSerializer
+
+    def get_object(self):
+        # Retrieve opening hours for the current user's restaurant
+        opening_hours_instance = OpeningHours.objects.filter(
+            restaurant=self.request.user.restaurant).first()
+
+        if not opening_hours_instance:
+            # You can customize the response if opening hours do not exist
+            return Response({"detail": "Opening hours not found for this restaurant."},
+                            status=404)
+
+        return opening_hours_instance
+
+
+class FeedbackCreateView(generics.CreateAPIView):
+    serializer_class = FeedbackSerializer
+
+    def perform_create(self, serializer):
+        # Extract the necessary data from the request
+        gst_no = self.request.data.get('gst_no')
+        menu_id = self.request.data.get('menu_id')
+
+        # Find the restaurant based on GST number
+        restaurant = get_object_or_404(Restaurant, gst_no=gst_no)
+
+        # Check if the specified menu exists for the restaurant
+        menu = get_object_or_404(Menu, id=menu_id, restaurant=restaurant)
+
+        # Set the restaurant and menu for the feedback
+        serializer.save(user=self.request.user,
+                        restaurant=restaurant, menu=menu)
+
+        return Response({'message': 'Feedback created successfully'}, status=status.HTTP_201_CREATED)
