@@ -43,11 +43,18 @@ class OpeningHours(models.Model):
 
 
 class Feedback(models.Model):
+    RATINGS_CHOICES = [
+        ('Angry', 'Angry'),
+        ('Good', 'Good'),
+        ('Average', 'Average'),
+        ('Bad', 'Bad'),
+        ('Loved', 'Loved'),
+    ]
+
     restaurant = models.ForeignKey('Restaurant', on_delete=models.CASCADE)
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField()
-    feedback_type = models.CharField(max_length=255)
+    ratings = models.CharField(max_length=10, choices=RATINGS_CHOICES)
+    feedback_type = models.JSONField(default=list)
     additional_comments = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.restaurant.restaurant_name} - {self.user.username} Feedback"
+        return f"{self.restaurant.restaurant_name} - {self.get_ratings_display()}"

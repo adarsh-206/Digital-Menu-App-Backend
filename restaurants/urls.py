@@ -15,4 +15,10 @@ urlpatterns = [
          views.OpeningHoursCreateView.as_view(), name='opening-hours-create'),
     path('restaurants/opening-hours/',
          views.OpeningHoursRetrieveView.as_view(), name='opening-hours-detail'),
+    path('restaurants/feedbacks/',
+         views.FeedbackCreateView.as_view(), name='create-feedback'),
+    path('restaurants/feedbacks/list/',
+         views.FeedbackListView.as_view(), name='list-feedbacks'),
+    path('restaurants/feedbacks/detail/', views.FeedbackRetrieveView.as_view(
+        {'get': 'retrieve'}), name='retrieve-feedback'),
 ]

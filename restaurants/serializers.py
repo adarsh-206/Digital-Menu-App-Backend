@@ -24,15 +24,15 @@ class OpeningHoursSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = '__all__'
+
+
 class RestaurantSerializer(serializers.ModelSerializer):
     events = EventSerializer(many=True, read_only=True)
 
     class Meta:
         model = Restaurant
-        fields = '__all__'
-
-
-class FeedbackSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Feedback
         fields = '__all__'

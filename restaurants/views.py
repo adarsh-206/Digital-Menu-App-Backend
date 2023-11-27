@@ -2,7 +2,7 @@
 from rest_framework import generics
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 from rest_framework.permissions import IsAuthenticated
-from .models import Restaurant, Event, OpeningHours
+from .models import Feedback, Restaurant, Event, OpeningHours
 from .serializers import RestaurantSerializer, EventSerializer, OpeningHoursSerializer, FeedbackSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,6 +10,9 @@ from rest_framework import status
 from django.conf import settings
 from menus.models import Menu
 from django.shortcuts import get_object_or_404
+from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.viewsets import GenericViewSet
 
 
 class RestaurantListCreateView(generics.ListCreateAPIView):
@@ -112,7 +115,6 @@ class EventCreateView(generics.CreateAPIView):
 
 
 class EventListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
     serializer_class = EventSerializer
 
     def get_queryset(self):
@@ -138,7 +140,6 @@ class OpeningHoursCreateView(generics.CreateAPIView):
 
 
 class OpeningHoursRetrieveView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
     serializer_class = OpeningHoursSerializer
 
     def get_object(self):
@@ -154,22 +155,34 @@ class OpeningHoursRetrieveView(generics.RetrieveAPIView):
         return opening_hours_instance
 
 
-class FeedbackCreateView(generics.CreateAPIView):
+class FeedbackCreateView(CreateAPIView):
     serializer_class = FeedbackSerializer
 
     def perform_create(self, serializer):
-        # Extract the necessary data from the request
-        gst_no = self.request.data.get('gst_no')
-        menu_id = self.request.data.get('menu_id')
+        restaurant_id = self.request.data.get('restaurant')
+        restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+        serializer.save(restaurant=restaurant)
 
-        # Find the restaurant based on GST number
-        restaurant = get_object_or_404(Restaurant, gst_no=gst_no)
 
-        # Check if the specified menu exists for the restaurant
-        menu = get_object_or_404(Menu, id=menu_id, restaurant=restaurant)
+class FeedbackListView(ListAPIView):
+    serializer_class = FeedbackSerializer
 
-        # Set the restaurant and menu for the feedback
-        serializer.save(user=self.request.user,
-                        restaurant=restaurant, menu=menu)
+    def get_queryset(self):
+        restaurant_id = self.request.data.get('restaurant')
+        return Feedback.objects.filter(restaurant_id=restaurant_id)
 
-        return Response({'message': 'Feedback created successfully'}, status=status.HTTP_201_CREATED)
+
+class FeedbackRetrieveView(RetrieveModelMixin, GenericViewSet):
+    serializer_class = FeedbackSerializer
+
+    def get_object(self):
+        restaurant_id = self.request.data.get('restaurant')
+        feedback_instance = Feedback.objects.filter(
+            restaurant_id=restaurant_id).first()
+
+        if not feedback_instance:
+            # You can customize the response if feedbacks do not exist
+            return Response({"detail": "Feedbacks not found for this restaurant."},
+                            status=404)
+
+        return feedback_instance
