@@ -83,20 +83,20 @@ WSGI_APPLICATION = 'MenuManagement.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "MenuManagement",
-        "USER": "postgres",
-        "PASSWORD": "admin",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
-}
-
 # DATABASES = {
-#     "default": dj_database_url.parse(env('DATABASE_URL'))
+#     'default': {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "MenuManagement",
+#         "USER": "postgres",
+#         "PASSWORD": "admin",
+#         "HOST": "localhost",
+#         "PORT": "5432",
+#     }
 # }
+
+DATABASES = {
+    "default": dj_database_url.parse(env('DATABASE_URL'))
+}
 
 # REST FRAMEWORK
 
